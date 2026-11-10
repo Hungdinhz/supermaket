@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head><title>Phiếu nhập · FreshMart</title></head>
+<body>
+<main>
+    <div class="page-header">
+        <div>
+            <h1>Phiếu nhập <span class="text-success" th:text="'#' + ${p.stt}"></span>
+                <span class="badge fs-6 align-middle ms-2" th:classappend="'text-bg-' + ${@ui.color(p.trangThai)}" th:text="${@ui.label(p.trangThai)}"></span>
+            </h1>
+            <div class="crumb"><a th:href="@{/}">Dashboard</a> / <a th:href="@{/nhap-kho}">Nhập kho</a> / Phiếu #<span th:text="${p.stt}"></span></div>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/nhap-kho}" class="btn btn-light"><i class="bi bi-arrow-left me-1"></i>Danh sách</a>
+            <button th:if="${coTheHuy}" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#huyModal">
+                <i class="bi bi-x-circle me-1"></i>Hủy phiếu
+            </button>
+            <a th:href="@{/nhap-kho/moi}" class="btn btn-brand"><i class="bi bi-plus-lg me-1"></i>Lập phiếu mới</a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-4">
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-file-earmark-text me-2"></i>Thông tin phiếu</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5 text-muted fw-normal">Ngày giờ</dt>
+                        <dd class="col-7" th:text="${#temporals.format(p.ngayGio, 'dd/MM/yyyy HH:mm:ss')}"></dd>
+                        <dt class="col-5 text-muted fw-normal">NV lập phiếu</dt>
+                        <dd class="col-7"><b th:text="${p.tenNhanVien}"></b><br><small class="text-muted" th:text="${p.emailNhanVien}"></small></dd>
+                        <dt class="col-5 text-muted fw-normal">Nhà cung cấp</dt>
+                        <dd class="col-7"><b th:text="${p.tenNhaCungCap}"></b><br><small class="text-muted" th:text="${p.emailNhaCungCap}"></small></dd>
+                        <dt class="col-5 text-muted fw-normal">Ghi chú</dt>
+                        <dd class="col-7" th:text="${p.ghiChu ?: '—'}"></dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="total-box">
+                <div><div class="text-muted small">Tổng SL</div><div class="fw-bold fs-5" th:text="${p.tongSoLuong}"></div></div>
+                <div class="text-end"><div class="text-muted small">Tổng tiền</div><div class="amount" th:text="${@ui.money(p.tongTien)}"></div></div>
+            </div>
+            <div th:if="${!coTheHuy and p.trangThai != 'DA_HUY'}" class="alert alert-light border small mt-3">
+                <i class="bi bi-lock me-1"></i>Phiếu không thể hủy vì đã có sản phẩm được bán ra.
+            </div>
+        </div>
+
+        <div class="col-xl-8">
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-list-check me-2"></i>Chi tiết phiếu nhập (CTPNK)</div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Mã SP</th><th>Sản phẩm</th><th class="text-center">Số lượng</th><th class="text-end">Đơn giá nhập</th><th class="text-end">Thành tiền</th></tr></thead>
+                        <tbody>
+                        <tr th:each="c : ${chiTiet}">
+                            <td><span class="code" th:text="${c.maSanPham}"></span></td>
+                            <td th:text="${c.tenSanPham}"></td>
+                            <td class="text-center" th:text="${c.soLuong + ' ' + c.donViTinh}"></td>
+                            <td class="text-end money" th:text="${@ui.money(c.donGiaNhap)}"></td>
+                            <td class="text-end money fw-semibold" th:text="${@ui.money(c.thanhTien())}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between flex-wrap gap-2">
+                    <span><i class="bi bi-upc-scan me-2"></i>Mã định danh đã sinh (SPCUTHE) · <span th:text="${#lists.size(serials)}"></span> sản phẩm</span>
+                    <span class="small">
+                        <span class="serial-chip TRONG_KHO">Trong kho</span>
+                        <span class="serial-chip DA_BAN">Đã bán</span>
+                        <span class="serial-chip LOI">Lỗi/Hủy</span>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="serial-grid">
+                        <a th:each="s : ${serials}" th:href="@{/tra-cuu(ma=${s.maDinhDanh})}"
+                           class="serial-chip" th:classappend="${s.tt}" th:text="${s.maDinhDanh}"
+                           th:title="${s.tenSanPham + ' – ' + @ui.label(s.tt)}"></a>
+                    </div>
+                    <div th:if="${#lists.isEmpty(serials)}" class="empty"><i class="bi bi-upc"></i>Phiếu chưa có mã định danh</div>
+                    <div class="small text-muted mt-2"><i class="bi bi-hand-index"></i> Bấm vào một mã để truy vết nguồn gốc.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal huy phieu -->
+    <div class="modal fade" id="huyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form class="modal-content" method="post" th:action="@{/nhap-kho/{s}/huy(s=${p.stt})}">
+                <div class="modal-header"><h5 class="modal-title">Hủy phiếu nhập #<span th:text="${p.stt}"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p>Hủy phiếu sẽ <b>trừ lại tồn kho</b> và đánh dấu toàn bộ mã định danh của phiếu là <b>Lỗi/Hủy</b>.</p>
+                    <label class="form-label">Lý do hủy</label>
+                    <input name="lyDo" class="form-control" placeholder="VD: Hàng giao sai quy cách" maxlength="150">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                    <button class="btn btn-danger"><i class="bi bi-x-circle me-1"></i>Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

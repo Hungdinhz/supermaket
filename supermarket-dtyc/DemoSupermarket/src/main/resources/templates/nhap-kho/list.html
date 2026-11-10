@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head><title>Nhập kho · FreshMart</title></head>
+<body>
+<main>
+    <div class="page-header">
+        <div>
+            <h1><i class="bi bi-box-arrow-in-down text-success me-2"></i>Phiếu nhập kho</h1>
+            <div class="crumb"><a th:href="@{/}">Dashboard</a> / Nhập kho · Bảng <span class="code">PNK</span> + <span class="code">CTPNK</span></div>
+        </div>
+        <a th:href="@{/nhap-kho/moi}" class="btn btn-brand btn-lg"><i class="bi bi-plus-lg me-1"></i>Lập phiếu nhập</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form class="row g-2 align-items-end" method="get">
+                <div class="col-md-3">
+                    <label class="form-label">Nhà cung cấp</label>
+                    <select name="ncc" class="form-select">
+                        <option value="">— Tất cả —</option>
+                        <option th:each="n : ${dsNcc}" th:value="${n.email}" th:text="${n.hoTen}" th:selected="${n.email == ncc}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="trangThai" class="form-select">
+                        <option value="">— Tất cả —</option>
+                        <option value="HOAN_THANH" th:selected="${trangThai == 'HOAN_THANH'}">Hoàn thành</option>
+                        <option value="DA_HUY" th:selected="${trangThai == 'DA_HUY'}">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Từ ngày</label>
+                    <input type="date" name="tuNgay" class="form-control" th:value="${tuNgay}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Đến ngày</label>
+                    <input type="date" name="denNgay" class="form-control" th:value="${denNgay}">
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button class="btn btn-success"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                    <a th:href="@{/nhap-kho}" class="btn btn-light">Xóa lọc</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <span><i class="bi bi-list-ul me-2"></i><span th:text="${#lists.size(ds)}"></span> phiếu nhập</span>
+            <span>Tổng giá trị nhập: <b class="text-success" th:text="${@ui.money(tongTien)}"></b></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr><th>Số phiếu</th><th>Ngày giờ</th><th>Nhân viên lập</th><th>Nhà cung cấp</th>
+                    <th class="text-center">Mặt hàng</th><th class="text-center">Tổng SL</th><th class="text-end">Tổng tiền</th><th>Trạng thái</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${ds}" class="clickable" th:data-href="@{/nhap-kho/{s}(s=${p.stt})}">
+                    <td><b th:text="'#' + ${p.stt}"></b></td>
+                    <td th:text="${#temporals.format(p.ngayGio, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td th:text="${p.tenNhanVien}"></td>
+                    <td th:text="${p.tenNhaCungCap}"></td>
+                    <td class="text-center" th:text="${p.soMatHang}"></td>
+                    <td class="text-center" th:text="${p.tongSoLuong}"></td>
+                    <td class="text-end money fw-semibold" th:text="${@ui.money(p.tongTien)}"></td>
+                    <td><span class="badge" th:classappend="'text-bg-' + ${@ui.color(p.trangThai)}" th:text="${@ui.label(p.trangThai)}"></span></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(ds)}"><td colspan="8" class="empty"><i class="bi bi-inbox"></i>Không có phiếu nhập nào</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head><title>Dashboard · FreshMart</title></head>
+<body>
+<main>
+    <div class="page-header">
+        <div>
+            <h1>Xin chào 👋</h1>
+            <div class="crumb">Tổng quan hoạt động nhập kho &amp; bán hàng của siêu thị</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/nhap-kho/moi}" class="btn btn-outline-success"><i class="bi bi-box-arrow-in-down me-1"></i>Lập phiếu nhập</a>
+            <a th:href="@{/don-hang/moi}" class="btn btn-brand"><i class="bi bi-cart-plus me-1"></i>Tạo đơn hàng</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="stat stat-green">
+                <div class="label">Sản phẩm đang quản lý</div>
+                <div class="value" th:text="${tk.soSanPham}">0</div>
+                <div class="sub">Tổng tồn kho: <b th:text="${@ui.number(tk.tongTonKho)}"></b> đơn vị</div>
+                <i class="bi bi-boxes bg-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="stat stat-blue">
+                <div class="label">Phiếu nhập kho</div>
+                <div class="value" th:text="${tk.soPhieuNhap}">0</div>
+                <div class="sub">Giá trị nhập: <b th:text="${@ui.money(tk.tongTienNhap)}"></b></div>
+                <i class="bi bi-box-arrow-in-down bg-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <a th:href="@{/don-hang(trangThai='CHO_XAC_NHAN')}" class="text-decoration-none">
+                <div class="stat stat-orange">
+                    <div class="label">Đơn chờ xác nhận</div>
+                    <div class="value" th:text="${tk.donChoXacNhan}">0</div>
+                    <div class="sub">Bấm để xử lý ngay →</div>
+                    <i class="bi bi-hourglass-split bg-icon"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="stat stat-purple">
+                <div class="label">Doanh thu (đơn hoàn thành)</div>
+                <div class="value" th:text="${@ui.money(tk.doanhThu)}">0</div>
+                <div class="sub" th:text="${(demDon['HOAN_THANH'] ?: 0) + ' đơn đã giao thành công'}"></div>
+                <i class="bi bi-cash-stack bg-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between">
+                    <span><i class="bi bi-box-arrow-in-down me-2"></i>Phiếu nhập gần đây</span>
+                    <a th:href="@{/nhap-kho}" class="small text-decoration-none">Xem tất cả</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Số phiếu</th><th>Ngày</th><th>Nhà cung cấp</th><th class="text-end">Tổng tiền</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="p : ${phieuGanNhat}" class="clickable" th:data-href="@{/nhap-kho/{s}(s=${p.stt})}">
+                            <td><b th:text="'#' + ${p.stt}"></b></td>
+                            <td th:text="${#temporals.format(p.ngayGio, 'dd/MM HH:mm')}"></td>
+                            <td th:text="${p.tenNhaCungCap}"></td>
+                            <td class="text-end money" th:text="${@ui.money(p.tongTien)}"></td>
+                            <td><span class="badge" th:classappend="'text-bg-' + ${@ui.color(p.trangThai)}" th:text="${@ui.label(p.trangThai)}"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between">
+                    <span><i class="bi bi-cart-check me-2"></i>Đơn hàng gần đây</span>
+                    <a th:href="@{/don-hang}" class="small text-decoration-none">Xem tất cả</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Số đơn</th><th>Ngày</th><th>Khách hàng</th><th class="text-end">Tổng tiền</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="d : ${donGanNhat}" class="clickable" th:data-href="@{/don-hang/{s}(s=${d.stt})}">
+                            <td><b th:text="'#' + ${d.stt}"></b></td>
+                            <td th:text="${#temporals.format(d.ngayGio, 'dd/MM HH:mm')}"></td>
+                            <td th:text="${d.tenKhachHang}"></td>
+                            <td class="text-end money" th:text="${@ui.money(d.tongTien)}"></td>
+                            <td><span class="badge" th:classappend="'text-bg-' + ${@ui.color(d.trangThai)}" th:text="${@ui.label(d.trangThai)}"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-exclamation-triangle me-2"></i>Sản phẩm sắp hết hàng (tồn &lt; 10)</div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Mã</th><th>Sản phẩm</th><th>Loại</th><th class="text-end">Tồn kho</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="sp : ${sapHet}">
+                            <td><span class="code" th:text="${sp.maSanPham}"></span></td>
+                            <td th:text="${sp.ten}"></td>
+                            <td th:text="${sp.tenLoai}"></td>
+                            <td class="text-end"><span class="badge text-bg-danger" th:text="${sp.soLuong + ' ' + sp.donViTinh}"></span></td>
+                            <td class="text-end"><a th:href="@{/nhap-kho/moi}" class="btn btn-sm btn-outline-success">Nhập thêm</a></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(sapHet)}"><td colspan="5" class="empty"><i class="bi bi-emoji-smile"></i>Tất cả sản phẩm đều đủ hàng</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

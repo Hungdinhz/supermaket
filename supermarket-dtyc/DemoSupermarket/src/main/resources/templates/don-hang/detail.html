@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head><title>Đơn hàng · FreshMart</title></head>
+<body>
+<main>
+    <div class="page-header">
+        <div>
+            <h1>Đơn hàng <span class="text-success" th:text="'#' + ${d.stt}"></span>
+                <span class="badge fs-6 align-middle ms-2" th:classappend="'text-bg-' + ${@ui.color(d.trangThai)}">
+                    <i class="bi me-1" th:classappend="${@ui.icon(d.trangThai)}"></i><span th:text="${@ui.label(d.trangThai)}"></span></span>
+            </h1>
+            <div class="crumb"><a th:href="@{/}">Dashboard</a> / <a th:href="@{/don-hang}">Đơn hàng</a> / #<span th:text="${d.stt}"></span>
+                · đặt lúc <span th:text="${#temporals.format(d.ngayGio, 'dd/MM/yyyy HH:mm')}"></span></div>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/don-hang}" class="btn btn-light"><i class="bi bi-arrow-left me-1"></i>Danh sách</a>
+            <a th:href="@{/don-hang/moi}" class="btn btn-brand"><i class="bi bi-cart-plus me-1"></i>Tạo đơn mới</a>
+        </div>
+    </div>
+
+    <!-- ============ TIEN TRINH TRANG THAI ============ -->
+    <div class="card mb-3">
+        <div class="card-body py-4">
+            <div th:if="${d.trangThai == 'DA_HUY'}" class="alert alert-danger mb-0 d-flex align-items-center">
+                <i class="bi bi-x-octagon fs-3 me-3"></i>
+                <div><b>Đơn hàng đã bị hủy.</b><br><small>Các sản phẩm (nếu đã xuất) đã được trả về kho.</small></div>
+            </div>
+            <div th:unless="${d.trangThai == 'DA_HUY'}" class="stepper">
+                <div class="progress-line" th:style="|width: ${buocHienTai * 28}%|"></div>
+                <div th:each="t, it : ${quyTrinh}" class="step"
+                     th:classappend="${it.index < buocHienTai or (it.index == buocHienTai and t == 'HOAN_THANH')} ? 'done' : (${it.index == buocHienTai} ? 'current')">
+                    <div class="dot"><i class="bi" th:classappend="${@ui.icon(t)}"></i></div>
+                    <div class="name" th:text="${@ui.label(t)}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <!-- ============ HANH DONG THEO TRANG THAI ============ -->
+            <div class="card mb-3 border-start border-4 border-success" th:if="${d.trangThai == 'CHO_XAC_NHAN'}">
+                <div class="card-body">
+                    <h6 class="fw-bold"><i class="bi bi-clipboard-check text-success me-1"></i>Bước tiếp theo: Nhân viên xác nhận đơn</h6>
+                    <p class="small text-muted mb-2">Hệ thống sẽ gán nhân viên xử lý, lấy <b>mã định danh theo FIFO</b> (nhập trước – bán trước)
+                        chuyển sang <span class="code">DA_BAN</span> và <b>trừ tồn kho</b>.</p>
+                    <form class="row g-2" method="post" th:action="@{/don-hang/{s}/xac-nhan(s=${d.stt})}">
+                        <div class="col-md-7">
+                            <select name="emailNhanVien" class="form-select" required>
+                                <option value="">— Chọn nhân viên xử lý —</option>
+                                <option th:each="n : ${dsNhanVien}" th:value="${n.email}" th:text="${n.hoTen}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-5 d-flex gap-2">
+                            <button class="btn btn-success flex-fill"><i class="bi bi-check2-circle me-1"></i>Xác nhận đơn</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3 border-start border-4 border-primary" th:if="${d.trangThai == 'DA_XAC_NHAN'}">
+                <div class="card-body">
+                    <h6 class="fw-bold"><i class="bi bi-truck text-primary me-1"></i>Bước tiếp theo: Bàn giao vận chuyển</h6>
+                    <form class="row g-2" method="post" th:action="@{/don-hang/{s}/giao-hang(s=${d.stt})}">
+                        <div class="col-md-4">
+                            <input name="donViVanChuyen" class="form-control" list="dsDvvc" placeholder="Đơn vị vận chuyển" required maxlength="100">
+                            <datalist id="dsDvvc"><option>GHN</option><option>GHTK</option><option>ViettelPost</option><option>J&amp;T Express</option><option>Ninja Van</option></datalist>
+                        </div>
+                        <div class="col-md-4">
+                            <input name="maVanDon" class="form-control" placeholder="Mã vận đơn (duy nhất)" required maxlength="50"
+                                   th:value="${'GHN' + #numbers.formatInteger(d.stt, 4)}">
+                        </div>
+                        <div class="col-md-4"><button class="btn btn-primary w-100"><i class="bi bi-send me-1"></i>Bắt đầu giao</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3 border-start border-4 border-success" th:if="${d.trangThai == 'DANG_GIAO'}">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h6 class="fw-bold mb-1"><i class="bi bi-box-seam text-success me-1"></i>Đơn đang được giao</h6>
+                        <small class="text-muted">Xác nhận khi khách đã nhận hàng – đơn sẽ chuyển sang <b>Hoàn thành</b> và <b>Đã thanh toán</b>.</small>
+                    </div>
+                    <form method="post" th:action="@{/don-hang/{s}/hoan-thanh(s=${d.stt})}">
+                        <button class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Giao thành công</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ============ CHI TIET DON ============ -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-basket me-2"></i>Chi tiết đơn hàng (CTDON)</div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Mã SP</th><th>Sản phẩm</th><th class="text-center">Số lượng</th><th class="text-end">Đơn giá bán</th><th class="text-end">Thành tiền</th></tr></thead>
+                        <tbody>
+                        <tr th:each="c : ${chiTiet}">
+                            <td><span class="code" th:text="${c.maSanPham}"></span></td>
+                            <td th:text="${c.tenSanPham}"></td>
+                            <td class="text-center" th:text="${c.soLuong + ' ' + c.donViTinh}"></td>
+                            <td class="text-end money" th:text="${@ui.money(c.donGiaBan)}"></td>
+                            <td class="text-end money fw-semibold" th:text="${@ui.money(c.thanhTien())}"></td>
+                        </tr>
+                        </tbody>
+                        <tfoot>
+                        <tr><td colspan="4" class="text-end fw-bold">Tổng tiền</td>
+                            <td class="text-end money fw-bold fs-5 text-success" th:text="${@ui.money(d.tongTien)}"></td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><i class="bi bi-upc-scan me-2"></i>Mã định danh đã xuất cho đơn (SPCUTHE) · <span th:text="${#lists.size(serials)}"></span></div>
+                <div class="card-body">
+                    <div class="serial-grid">
+                        <a th:each="s : ${serials}" th:href="@{/tra-cuu(ma=${s.maDinhDanh})}" class="serial-chip" th:classappend="${s.tt}"
+                           th:text="${s.maDinhDanh}" th:title="${s.tenSanPham}"></a>
+                    </div>
+                    <div th:if="${#lists.isEmpty(serials)}" class="empty py-3">
+                        <i class="bi bi-upc"></i>
+                        <span th:text="${d.trangThai == 'CHO_XAC_NHAN'} ? 'Mã định danh sẽ được gán khi nhân viên xác nhận đơn' : 'Không có mã định danh'"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-geo-alt me-2"></i>Giao hàng</div>
+                <div class="card-body">
+                    <div class="fw-bold" th:text="${d.tenNguoiNhan}"></div>
+                    <div><i class="bi bi-telephone text-muted me-1"></i><span th:text="${d.sdtNhan}"></span></div>
+                    <div class="text-muted small mt-1" th:text="${d.diaChiNhan}"></div>
+                    <hr>
+                    <dl class="row mb-0 small">
+                        <dt class="col-6 text-muted fw-normal">Khách hàng</dt><dd class="col-6" th:text="${d.tenKhachHang}"></dd>
+                        <dt class="col-6 text-muted fw-normal">NV xử lý</dt><dd class="col-6" th:text="${d.tenNhanVien ?: 'Chưa có'}"></dd>
+                        <dt class="col-6 text-muted fw-normal">ĐV vận chuyển</dt><dd class="col-6" th:text="${d.donViVanChuyen ?: '—'}"></dd>
+                        <dt class="col-6 text-muted fw-normal">Mã vận đơn</dt><dd class="col-6"><span th:if="${d.maVanDon}" class="code" th:text="${d.maVanDon}"></span><span th:unless="${d.maVanDon}">—</span></dd>
+                        <dt class="col-6 text-muted fw-normal">Ghi chú</dt><dd class="col-6" th:text="${d.ghiChu ?: '—'}"></dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-credit-card me-2"></i>Thanh toán</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span th:text="${@ui.label(d.phuongThucThanhToan)}"></span>
+                        <span class="badge" th:classappend="'text-bg-' + ${@ui.color(d.trangThaiThanhToan)}" th:text="${@ui.label(d.trangThaiThanhToan)}"></span>
+                    </div>
+                    <form th:if="${d.trangThaiThanhToan != 'DA_THANH_TOAN' and d.trangThai != 'DA_HUY'}" method="post"
+                          th:action="@{/don-hang/{s}/thanh-toan(s=${d.stt})}">
+                        <button class="btn btn-outline-success btn-sm w-100"><i class="bi bi-cash-coin me-1"></i>Ghi nhận đã thanh toán</button>
+                    </form>
+                </div>
+            </div>
+            <form th:if="${d.trangThai == 'CHO_XAC_NHAN' or d.trangThai == 'DA_XAC_NHAN'}" method="post"
+                  th:action="@{/don-hang/{s}/huy(s=${d.stt})}" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?')">
+                <button class="btn btn-outline-danger w-100"><i class="bi bi-x-circle me-1"></i>Hủy đơn hàng</button>
+                <div class="small text-muted mt-1 text-center" th:if="${d.trangThai == 'DA_XAC_NHAN'}">Hàng đã xuất sẽ được trả về kho</div>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::main}, ~{::script})}">
+<head><title>Tạo đơn hàng · FreshMart</title></head>
+<body>
+<main>
+    <div class="page-header">
+        <div>
+            <h1><i class="bi bi-cart-plus text-success me-2"></i>Tạo đơn hàng</h1>
+            <div class="crumb"><a th:href="@{/}">Dashboard</a> / <a th:href="@{/don-hang}">Đơn hàng</a> / Tạo mới</div>
+        </div>
+    </div>
+
+    <form th:action="@{/don-hang}" method="post" th:object="${form}" autocomplete="off">
+        <div class="row g-3">
+            <div class="col-xl-4">
+                <div class="card mb-3">
+                    <div class="card-header"><i class="bi bi-person me-2"></i>Khách hàng &amp; giao hàng</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Khách hàng <span class="text-danger">*</span></label>
+                            <select th:field="*{emailKhachHang}" id="khachHang" class="form-select" required>
+                                <option value="">— Chọn khách hàng —</option>
+                                <option th:each="k : ${dsKhachHang}" th:value="${k.email}"
+                                        th:text="${k.hoTen + ' · ' + k.soDienThoai}"
+                                        th:data-ten="${k.hoTen}" th:data-sdt="${k.soDienThoai}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="soDiaChiBox" style="display:none">
+                            <label class="form-label">Sổ địa chỉ của khách (DIACHI)</label>
+                            <div id="soDiaChi" class="d-grid gap-2"></div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-7 mb-2">
+                                <label class="form-label">Tên người nhận <span class="text-danger">*</span></label>
+                                <input th:field="*{tenNguoiNhan}" id="tenNguoiNhan" class="form-control" maxlength="100" required>
+                            </div>
+                            <div class="col-5 mb-2">
+                                <label class="form-label">SĐT nhận <span class="text-danger">*</span></label>
+                                <input th:field="*{sdtNhan}" id="sdtNhan" class="form-control" maxlength="15" pattern="0[0-9]{9,10}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Địa chỉ nhận hàng <span class="text-danger">*</span></label>
+                            <textarea th:field="*{diaChiNhan}" id="diaChiNhan" class="form-control" rows="2" maxlength="255" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phương thức thanh toán</label>
+                            <select th:field="*{phuongThucThanhToan}" class="form-select">
+                                <option th:each="e : ${phuongThuc}" th:value="${e.key}" th:text="${e.value}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Ghi chú</label>
+                            <input th:field="*{ghiChu}" class="form-control" maxlength="255" placeholder="VD: Giao giờ hành chính">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-basket me-2"></i>Sản phẩm trong đơn (CTDON)</span>
+                        <button type="button" id="add-line" class="btn btn-sm btn-outline-success"><i class="bi bi-plus-lg me-1"></i>Thêm sản phẩm</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table line-table" id="lines" data-mode="ban">
+                            <thead>
+                            <tr><th style="width:40px">#</th><th>Sản phẩm</th><th style="width:110px">Số lượng</th>
+                                <th style="width:140px">Đơn giá bán</th><th class="text-end" style="width:140px">Thành tiền</th><th style="width:44px"></th></tr>
+                            </thead>
+                            <tbody>
+                            <tr class="line" th:each="d, it : *{chiTiet}">
+                                <td class="stt text-muted fw-semibold" th:text="${it.count}"></td>
+                                <td>
+                                    <select class="form-select sp" th:name="|chiTiet[${it.index}].maSanPham|">
+                                        <option value="">— Chọn sản phẩm —</option>
+                                        <option th:each="sp : ${dsSanPham}" th:value="${sp.maSanPham}"
+                                                th:text="${sp.ten + ' – ' + @ui.money(sp.giaBan)}"
+                                                th:data-gia="${sp.giaBan}" th:data-coban="${sp.coTheBan()}" th:data-dvt="${sp.donViTinh}"
+                                                th:selected="${sp.maSanPham == d.maSanPham}"></option>
+                                    </select>
+                                    <div class="stock-hint text-muted"></div>
+                                </td>
+                                <td><input type="number" min="1" class="form-control qty" th:name="|chiTiet[${it.index}].soLuong|" th:value="${d.soLuong ?: 1}"></td>
+                                <td><input type="number" class="form-control price bg-light" readonly tabindex="-1"></td>
+                                <td class="text-end money amount fw-semibold">0 ₫</td>
+                                <td><button type="button" class="btn btn-sm btn-light text-danger remove-line" title="Xóa"><i class="bi bi-trash"></i></button></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-body pt-2">
+                        <div id="dupe-warning" class="text-danger small mb-2 d-none">
+                            <i class="bi bi-exclamation-circle"></i> Có sản phẩm bị chọn trùng – hãy tăng số lượng thay vì thêm dòng.
+                        </div>
+                        <div class="small text-muted mb-2">
+                            <i class="bi bi-info-circle"></i> Đơn giá lấy theo <span class="code">SP.gia_ban</span> hiện tại và được lưu vào
+                            <span class="code">CTDON.don_gia_ban</span>. Tổng tiền được tính lại ở server.
+                            Tồn kho chỉ bị trừ khi <b>nhân viên xác nhận đơn</b>.
+                        </div>
+                        <div class="total-box">
+                            <div><div class="text-muted small">Tổng số lượng</div><div class="fw-bold fs-5"><span id="total-qty">0</span> sản phẩm</div></div>
+                            <div class="text-end"><div class="text-muted small">Tổng tiền đơn hàng</div><div class="amount" id="total">0 ₫</div></div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <a th:href="@{/don-hang}" class="btn btn-light">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-brand btn-lg px-4"><i class="bi bi-bag-check me-1"></i>Đặt hàng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <template id="line-tpl">
+        <tr class="line">
+            <td class="stt text-muted fw-semibold"></td>
+            <td>
+                <select class="form-select sp" name="chiTiet[__i__].maSanPham">
+                    <option value="">— Chọn sản phẩm —</option>
+                    <option th:each="sp : ${dsSanPham}" th:value="${sp.maSanPham}" th:text="${sp.ten + ' – ' + @ui.money(sp.giaBan)}"
+                            th:data-gia="${sp.giaBan}" th:data-coban="${sp.coTheBan()}" th:data-dvt="${sp.donViTinh}"></option>
+                </select>
+                <div class="stock-hint text-muted"></div>
+            </td>
+            <td><input type="number" min="1" class="form-control qty" name="chiTiet[__i__].soLuong" value="1"></td>
+            <td><input type="number" class="form-control price bg-light" readonly tabindex="-1"></td>
+            <td class="text-end money amount fw-semibold">0 ₫</td>
+            <td><button type="button" class="btn btn-sm btn-light text-danger remove-line" title="Xóa"><i class="bi bi-trash"></i></button></td>
+        </tr>
+    </template>
+</main>
+
+<script th:inline="javascript">
+    // Chon khach hang -> tai so dia chi (bang DIACHI) qua API JSON va tu dien thong tin nguoi nhan
+    (function () {
+        const apiUrl = /*[[@{/api/dia-chi}]]*/ '/api/dia-chi';
+        const sel = document.getElementById('khachHang');
+        const box = document.getElementById('soDiaChiBox');
+        const list = document.getElementById('soDiaChi');
+        const ten = document.getElementById('tenNguoiNhan');
+        const sdt = document.getElementById('sdtNhan');
+        const dc = document.getElementById('diaChiNhan');
+        const full = a => `${a.diaChiChiTiet}, ${a.xa}, ${a.huyen}, ${a.tinh}`;
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+
+        function apply(a) {
+            ten.value = a.tenNguoiNhan; sdt.value = a.soDienThoai; dc.value = full(a);
+        }
+
+        async function load(fill) {
+            list.innerHTML = '';
+            if (!sel.value) { box.style.display = 'none'; return; }
+            const opt = sel.selectedOptions[0];
+            const res = await fetch(apiUrl + '?email=' + encodeURIComponent(sel.value));
+            const ds = await res.json();
+            box.style.display = '';
+            if (!ds.length) {
+                list.innerHTML = '<div class="text-muted small">Khách chưa có địa chỉ – hãy nhập tay.</div>';
+                if (fill) { ten.value = opt.dataset.ten; sdt.value = opt.dataset.sdt; dc.value = ''; }
+                return;
+            }
+            ds.forEach((a, i) => {
+                const id = 'dc' + a.stt;
+                list.insertAdjacentHTML('beforeend', `
+                    <label class="border rounded-3 p-2 d-flex gap-2 small" for="${id}" style="cursor:pointer">
+                        <input class="form-check-input mt-1" type="radio" name="_dc" id="${id}" ${i === 0 && fill ? 'checked' : ''}>
+                        <span><b>${esc(a.tenNguoiNhan)}</b> · ${esc(a.soDienThoai)}
+                            ${a.macDinh ? '<span class="badge text-bg-success ms-1">Mặc định</span>' : ''}<br>
+                            <span class="text-muted">${esc(full(a))}</span></span>
+                    </label>`);
+                document.getElementById(id).addEventListener('change', () => apply(a));
+            });
+            if (fill) apply(ds[0]); // dia chi mac dinh duoc sap xep len dau
+        }
+
+        sel.addEventListener('change', () => load(true));
+        if (sel.value) load(!dc.value);
+    })();
+</script>
+</body>
+</html>

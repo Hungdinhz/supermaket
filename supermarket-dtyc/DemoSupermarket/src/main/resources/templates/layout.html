@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, scripts)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:replace="${title}">Siêu thị</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="app">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+        <a th:href="@{/}" class="brand">
+            <span class="brand-logo"><i class="bi bi-basket2-fill"></i></span>
+            <span>
+                <span class="brand-name">FreshMart</span>
+                <small class="brand-sub">Quản lý siêu thị</small>
+            </span>
+        </a>
+
+        <div class="nav-section">Tổng quan</div>
+        <a th:href="@{/}" class="nav-item" th:classappend="${menu == 'dashboard'} ? 'active'">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+
+        <div class="nav-section">Nghiệp vụ chính</div>
+        <a th:href="@{/nhap-kho}" class="nav-item" th:classappend="${menu == 'nhap-kho'} ? 'active'">
+            <i class="bi bi-box-arrow-in-down"></i> Nhập kho
+            <span class="nav-tag">Module 1</span>
+        </a>
+        <a th:href="@{/don-hang}" class="nav-item" th:classappend="${menu == 'don-hang'} ? 'active'">
+            <i class="bi bi-cart-check"></i> Đơn hàng
+            <span class="nav-tag">Module 2</span>
+        </a>
+
+        <div class="nav-section">Tra cứu</div>
+        <a th:href="@{/san-pham}" class="nav-item" th:classappend="${menu == 'san-pham'} ? 'active'">
+            <i class="bi bi-boxes"></i> Sản phẩm &amp; tồn kho
+        </a>
+        <a th:href="@{/tra-cuu}" class="nav-item" th:classappend="${menu == 'tra-cuu'} ? 'active'">
+            <i class="bi bi-upc-scan"></i> Tra cứu mã định danh
+        </a>
+
+        <div class="sidebar-footer">
+            <i class="bi bi-database"></i> PostgreSQL · supermarket
+        </div>
+    </aside>
+
+    <!-- ============ NOI DUNG ============ -->
+    <div class="content">
+        <div class="container-fluid py-4 px-4">
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm flash" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm flash" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <main th:replace="${content}"></main>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<th:block th:replace="${scripts}"></th:block>
+</body>
+</html>

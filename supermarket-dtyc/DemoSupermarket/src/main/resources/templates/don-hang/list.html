@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head><title>Đơn hàng · FreshMart</title></head>
+<body>
+<main>
+    <div class="page-header">
+        <div>
+            <h1><i class="bi bi-cart-check text-success me-2"></i>Đơn hàng</h1>
+            <div class="crumb"><a th:href="@{/}">Dashboard</a> / Đơn hàng · Bảng <span class="code">DON</span> + <span class="code">CTDON</span></div>
+        </div>
+        <a th:href="@{/don-hang/moi}" class="btn btn-brand btn-lg"><i class="bi bi-cart-plus me-1"></i>Tạo đơn hàng</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header pb-0 border-0">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <ul class="nav nav-tabs-status">
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${trangThai == null or trangThai == ''} ? 'active'" th:href="@{/don-hang(q=${q})}">
+                            Tất cả <span class="count" th:text="${tongDon}"></span></a>
+                    </li>
+                    <li class="nav-item" th:each="t : ${dsTrangThai}">
+                        <a class="nav-link" th:classappend="${trangThai == t} ? 'active'" th:href="@{/don-hang(trangThai=${t}, q=${q})}">
+                            <i class="bi" th:classappend="${@ui.icon(t)}"></i>
+                            <span th:text="${@ui.label(t)}"></span>
+                            <span class="count" th:text="${dem[t] ?: 0}"></span></a>
+                    </li>
+                </ul>
+                <form class="d-flex gap-2 mb-2" method="get">
+                    <input type="hidden" name="trangThai" th:value="${trangThai}">
+                    <input name="q" class="form-control" th:value="${q}" placeholder="Số đơn, tên, SĐT...">
+                    <button class="btn btn-success"><i class="bi bi-search"></i></button>
+                </form>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr><th>Số đơn</th><th>Ngày đặt</th><th>Khách hàng</th><th>Người nhận</th><th class="text-center">Mặt hàng</th>
+                    <th class="text-end">Tổng tiền</th><th>Thanh toán</th><th>NV xử lý</th><th>Trạng thái</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${ds}" class="clickable" th:data-href="@{/don-hang/{s}(s=${d.stt})}">
+                    <td><b th:text="'#' + ${d.stt}"></b></td>
+                    <td th:text="${#temporals.format(d.ngayGio, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td th:text="${d.tenKhachHang}"></td>
+                    <td><span th:text="${d.tenNguoiNhan}"></span><br><small class="text-muted" th:text="${d.sdtNhan}"></small></td>
+                    <td class="text-center" th:text="${d.soMatHang}"></td>
+                    <td class="text-end money fw-semibold" th:text="${@ui.money(d.tongTien)}"></td>
+                    <td><small th:text="${@ui.label(d.phuongThucThanhToan)}"></small><br>
+                        <span class="badge" th:classappend="'text-bg-' + ${@ui.color(d.trangThaiThanhToan)}" th:text="${@ui.label(d.trangThaiThanhToan)}"></span></td>
+                    <td th:text="${d.tenNhanVien ?: '—'}" th:classappend="${d.tenNhanVien == null} ? 'text-muted'"></td>
+                    <td><span class="badge" th:classappend="'text-bg-' + ${@ui.color(d.trangThai)}">
+                        <i class="bi me-1" th:classappend="${@ui.icon(d.trangThai)}"></i><span th:text="${@ui.label(d.trangThai)}"></span></span></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(ds)}"><td colspan="9" class="empty"><i class="bi bi-inbox"></i>Không có đơn hàng nào</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

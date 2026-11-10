@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head><title>Tra cứu mã định danh · FreshMart</title></head>
+<body>
+<main>
+    <div class="page-header">
+        <div>
+            <h1><i class="bi bi-upc-scan text-success me-2"></i>Tra cứu &amp; truy vết mã định danh</h1>
+            <div class="crumb"><a th:href="@{/}">Dashboard</a> / Tra cứu · Quan hệ <span class="code">CTPNK ||..|{ SPCUTHE</span> &amp; <span class="code">CTDON o|..|{ SPCUTHE</span></div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form class="row g-2 align-items-center" method="get" th:action="@{/tra-cuu}">
+                <div class="col-md-9">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white"><i class="bi bi-upc-scan text-success"></i></span>
+                        <input name="ma" class="form-control" th:value="${ma}" placeholder="Nhập mã định danh (VD: SN-SP001-0001) hoặc tên sản phẩm...">
+                    </div>
+                </div>
+                <div class="col-md-3 d-grid">
+                    <button class="btn btn-brand btn-lg"><i class="bi bi-search me-1"></i>Truy vết nguồn gốc</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============ KET QUA TRUY VET ============ -->
+    <div th:if="${kq != null}">
+        <div class="trace mb-4">
+            <!-- Node 1: Phieu nhap goc -->
+            <div class="card trace-node border-top border-4 border-primary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-box-arrow-in-down text-primary me-1"></i>1. Nguồn nhập kho (PNK/CTPNK)</span>
+                    <a th:if="${kq.phieuNhap != null}" th:href="@{/nhap-kho/{s}(s=${kq.phieuNhap.stt})}" class="btn btn-sm btn-outline-primary">
+                        Phiếu #<span th:text="${kq.phieuNhap.stt}"></span>
+                    </a>
+                </div>
+                <div class="card-body" th:if="${kq.phieuNhap != null}">
+                    <dl class="row mb-0 small">
+                        <dt class="col-5 text-muted fw-normal">Số phiếu nhập</dt>
+                        <dd class="col-7 fw-bold" th:text="'#' + ${kq.phieuNhap.stt}"></dd>
+                        <dt class="col-5 text-muted fw-normal">Ngày nhập</dt>
+                        <dd class="col-7" th:text="${#temporals.format(kq.phieuNhap.ngayGio, 'dd/MM/yyyy HH:mm')}"></dd>
+                        <dt class="col-5 text-muted fw-normal">Nhà cung cấp</dt>
+                        <dd class="col-7" th:text="${kq.phieuNhap.tenNhaCungCap}"></dd>
+                        <dt class="col-5 text-muted fw-normal">NV lập phiếu</dt>
+                        <dd class="col-7" th:text="${kq.phieuNhap.tenNhanVien}"></dd>
+                        <dt class="col-5 text-muted fw-normal">Đơn giá nhập</dt>
+                        <dd class="col-7 money fw-semibold text-primary" th:text="${@ui.money(kq.donGiaNhap)}"></dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="trace-arrow"><i class="bi bi-arrow-right-circle-fill text-success"></i></div>
+
+            <!-- Node 2: Ca the san pham -->
+            <div class="card trace-node border-top border-4 border-success">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-upc-scan text-success me-1"></i>2. Cá thể sản phẩm (SPCUTHE)</span>
+                    <span class="badge" th:classappend="'text-bg-' + ${@ui.color(kq.serial.tt)}" th:text="${@ui.label(kq.serial.tt)}"></span>
+                </div>
+                <div class="card-body">
+                    <div class="fs-5 fw-bold font-monospace text-success mb-2" th:text="${kq.serial.maDinhDanh}"></div>
+                    <dl class="row mb-0 small">
+                        <dt class="col-5 text-muted fw-normal">Mã SP</dt>
+                        <dd class="col-7"><span class="code" th:text="${kq.serial.maSanPham}"></span></dd>
+                        <dt class="col-5 text-muted fw-normal">Tên sản phẩm</dt>
+                        <dd class="col-7 fw-semibold" th:text="${kq.serial.tenSanPham}"></dd>
+                        <dt class="col-5 text-muted fw-normal" th:if="${sp != null}">Thương hiệu</dt>
+                        <dd class="col-7" th:if="${sp != null}" th:text="${sp.tenThuongHieu + ' · ' + sp.tenLoai}"></dd>
+                        <dt class="col-5 text-muted fw-normal" th:if="${sp != null}">Giá niêm yết</dt>
+                        <dd class="col-7 money" th:if="${sp != null}" th:text="${@ui.money(sp.giaBan)}"></dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="trace-arrow"><i class="bi bi-arrow-right-circle-fill" th:classappend="${kq.don != null} ? 'text-success' : 'text-muted'"></i></div>
+
+            <!-- Node 3: Don hang da ban -->
+            <div class="card trace-node border-top border-4" th:classappend="${kq.don != null} ? 'border-warning' : 'border-secondary'">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-cart-check me-1"></i>3. Đơn hàng đầu ra (DON/CTDON)</span>
+                    <a th:if="${kq.don != null}" th:href="@{/don-hang/{s}(s=${kq.don.stt})}" class="btn btn-sm btn-outline-success">
+                        Đơn #<span th:text="${kq.don.stt}"></span>
+                    </a>
+                </div>
+                <div class="card-body" th:if="${kq.don != null}">
+                    <dl class="row mb-0 small">
+                        <dt class="col-5 text-muted fw-normal">Số đơn hàng</dt>
+                        <dd class="col-7 fw-bold" th:text="'#' + ${kq.don.stt} + ' (' + ${@ui.label(kq.don.trangThai)} + ')'"></dd>
+                        <dt class="col-5 text-muted fw-normal">Ngày đặt</dt>
+                        <dd class="col-7" th:text="${#temporals.format(kq.don.ngayGio, 'dd/MM/yyyy HH:mm')}"></dd>
+                        <dt class="col-5 text-muted fw-normal">Khách hàng</dt>
+                        <dd class="col-7" th:text="${kq.don.tenKhachHang}"></dd>
+                        <dt class="col-5 text-muted fw-normal">Người nhận</dt>
+                        <dd class="col-7" th:text="${kq.don.tenNguoiNhan + ' · ' + kq.don.sdtNhan}"></dd>
+                        <dt class="col-5 text-muted fw-normal">Đơn giá bán</dt>
+                        <dd class="col-7 money fw-semibold text-success" th:text="${@ui.money(kq.donGiaBan)}"></dd>
+                    </dl>
+                </div>
+                <div class="card-body empty py-4" th:if="${kq.don == null}">
+                    <i class="bi bi-box-seam"></i>
+                    <span th:text="${kq.serial.tt == 'TRONG_KHO'} ? 'Chưa thuộc đơn hàng nào (đang nằm trong kho)' : 'Đã hủy / lỗi'"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ DANH SACH GOI Y ============ -->
+    <div class="card" th:if="${goiY != null}">
+        <div class="card-header">
+            <i class="bi bi-list-ul me-2"></i>
+            <span th:text="${ma != null and !#strings.isEmpty(ma)} ? 'Kết quả gần đúng – bấm vào mã để xem truy vết' : 'Một số mã định danh gần đây – bấm vào mã để xem truy vết'"></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr><th>Mã định danh</th><th>Sản phẩm</th><th>Phiếu nhập gốc</th><th>Đơn bán</th><th>Trạng thái</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${goiY}" class="clickable" th:data-href="@{/tra-cuu(ma=${s.maDinhDanh})}">
+                    <td><span class="serial-chip" th:classappend="${s.tt}" th:text="${s.maDinhDanh}"></span></td>
+                    <td><span class="code me-1" th:text="${s.maSanPham}"></span><span th:text="${s.tenSanPham}"></span></td>
+                    <td><a th:href="@{/nhap-kho/{p}(p=${s.sttPnk})}" th:text="'Phiếu #' + ${s.sttPnk}"></a></td>
+                    <td>
+                        <a th:if="${s.sttDon != null}" th:href="@{/don-hang/{d}(d=${s.sttDon})}" th:text="'Đơn #' + ${s.sttDon}"></a>
+                        <span th:if="${s.sttDon == null}" class="text-muted">—</span>
+                    </td>
+                    <td><span class="badge" th:classappend="'text-bg-' + ${@ui.color(s.tt)}" th:text="${@ui.label(s.tt)}"></span></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(goiY)}"><td colspan="5" class="empty"><i class="bi bi-search"></i>Không tìm thấy mã định danh nào</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

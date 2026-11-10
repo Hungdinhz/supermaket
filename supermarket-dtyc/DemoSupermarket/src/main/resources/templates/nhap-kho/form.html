@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head><title>Lập phiếu nhập · FreshMart</title></head>
+<body>
+<main>
+    <div class="page-header">
+        <div>
+            <h1><i class="bi bi-plus-square text-success me-2"></i>Lập phiếu nhập kho</h1>
+            <div class="crumb"><a th:href="@{/}">Dashboard</a> / <a th:href="@{/nhap-kho}">Nhập kho</a> / Lập phiếu mới</div>
+        </div>
+    </div>
+
+    <form th:action="@{/nhap-kho}" method="post" th:object="${form}" autocomplete="off">
+        <div class="row g-3">
+            <!-- Thong tin phieu -->
+            <div class="col-xl-4">
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-file-earmark-text me-2"></i>Thông tin phiếu (PNK)</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nhân viên lập phiếu <span class="text-danger">*</span></label>
+                            <select th:field="*{emailNhanVien}" class="form-select" required>
+                                <option value="">— Chọn nhân viên —</option>
+                                <option th:each="n : ${dsNhanVien}" th:value="${n.email}" th:text="${n.hoTen + ' (' + n.email + ')'}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nhà cung cấp <span class="text-danger">*</span></label>
+                            <select th:field="*{emailNhaCungCap}" class="form-select" required>
+                                <option value="">— Chọn nhà cung cấp —</option>
+                                <option th:each="n : ${dsNcc}" th:value="${n.email}" th:text="${n.hoTen}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ghi chú</label>
+                            <textarea th:field="*{ghiChu}" class="form-control" rows="3" maxlength="255"
+                                      placeholder="VD: Nhập hàng đợt 2 tháng 11"></textarea>
+                        </div>
+                        <div class="alert alert-light border small mb-0">
+                            <i class="bi bi-info-circle text-primary me-1"></i>
+                            Khi lưu, hệ thống sẽ trong <b>1 giao dịch</b>:
+                            <ol class="mb-0 ps-3 mt-1">
+                                <li>Tạo phiếu <span class="code">PNK</span></li>
+                                <li>Tạo chi tiết <span class="code">CTPNK</span></li>
+                                <li>Sinh <b>mã định danh</b> cho từng sản phẩm (<span class="code">SPCUTHE</span>)</li>
+                                <li>Cộng tồn kho <span class="code">SP.so_luong</span></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chi tiet -->
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-list-check me-2"></i>Chi tiết hàng nhập (CTPNK)</span>
+                        <button type="button" id="add-line" class="btn btn-sm btn-outline-success"><i class="bi bi-plus-lg me-1"></i>Thêm dòng</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table line-table" id="lines" data-mode="nhap">
+                            <thead>
+                            <tr><th style="width:40px">#</th><th>Sản phẩm</th><th style="width:110px">Số lượng</th>
+                                <th style="width:150px">Đơn giá nhập</th><th class="text-end" style="width:140px">Thành tiền</th><th style="width:44px"></th></tr>
+                            </thead>
+                            <tbody>
+                            <tr class="line" th:each="d, it : *{chiTiet}">
+                                <td class="stt text-muted fw-semibold" th:text="${it.count}"></td>
+                                <td>
+                                    <select class="form-select sp" th:name="|chiTiet[${it.index}].maSanPham|">
+                                        <option value="">— Chọn sản phẩm —</option>
+                                        <option th:each="sp : ${dsSanPham}" th:value="${sp.maSanPham}"
+                                                th:text="${sp.maSanPham + ' · ' + sp.ten}"
+                                                th:data-ton="${sp.soLuong}" th:data-dvt="${sp.donViTinh}" th:data-gia="${sp.giaBan}"
+                                                th:selected="${sp.maSanPham == d.maSanPham}"></option>
+                                    </select>
+                                    <div class="stock-hint text-muted"></div>
+                                </td>
+                                <td><input type="number" min="1" class="form-control qty" th:name="|chiTiet[${it.index}].soLuong|" th:value="${d.soLuong}" placeholder="0"></td>
+                                <td><input type="number" min="0" step="100" class="form-control price" th:name="|chiTiet[${it.index}].donGia|" th:value="${d.donGia}" placeholder="0"></td>
+                                <td class="text-end money amount fw-semibold">0 ₫</td>
+                                <td><button type="button" class="btn btn-sm btn-light text-danger remove-line" title="Xóa dòng"><i class="bi bi-trash"></i></button></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-body pt-2">
+                        <div id="dupe-warning" class="text-danger small mb-2 d-none">
+                            <i class="bi bi-exclamation-circle"></i> Có sản phẩm bị chọn trùng – mỗi sản phẩm chỉ được xuất hiện 1 lần trong phiếu.
+                        </div>
+                        <div class="total-box">
+                            <div>
+                                <div class="text-muted small">Tổng số lượng nhập</div>
+                                <div class="fw-bold fs-5"><span id="total-qty">0</span> đơn vị</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-muted small">Tổng tiền phiếu nhập</div>
+                                <div class="amount" id="total">0 ₫</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <a th:href="@{/nhap-kho}" class="btn btn-light">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-brand btn-lg px-4"><i class="bi bi-save me-1"></i>Lưu phiếu nhập</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <template id="line-tpl">
+        <tr class="line">
+            <td class="stt text-muted fw-semibold"></td>
+            <td>
+                <select class="form-select sp" name="chiTiet[__i__].maSanPham">
+                    <option value="">— Chọn sản phẩm —</option>
+                    <option th:each="sp : ${dsSanPham}" th:value="${sp.maSanPham}" th:text="${sp.maSanPham + ' · ' + sp.ten}"
+                            th:data-ton="${sp.soLuong}" th:data-dvt="${sp.donViTinh}" th:data-gia="${sp.giaBan}"></option>
+                </select>
+                <div class="stock-hint text-muted"></div>
+            </td>
+            <td><input type="number" min="1" class="form-control qty" name="chiTiet[__i__].soLuong" placeholder="0"></td>
+            <td><input type="number" min="0" step="100" class="form-control price" name="chiTiet[__i__].donGia" placeholder="0"></td>
+            <td class="text-end money amount fw-semibold">0 ₫</td>
+            <td><button type="button" class="btn btn-sm btn-light text-danger remove-line" title="Xóa dòng"><i class="bi bi-trash"></i></button></td>
+        </tr>
+    </template>
+</main>
+</body>
+</html>

@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/supermarket
+    username: postgres
+    password: 123456
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8088
+
+# Ghi chu: project dung JdbcTemplate (SQL viet tay), KHONG dung JPA/Hibernate
+# => khong co ddl-auto, se khong bao gio tu sua cau truc bang trong DB.
+logging:
+  level:
+    org.springframework.jdbc.core.JdbcTemplate: DEBUG
